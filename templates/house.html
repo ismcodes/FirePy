@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+.person{
+	position:absolute;
+	z-index: 2;
+	border-radius: 100%;
+	background-color:red;
+}
+.safe{
+	color:gray;
+	border: 3px solid black;
+	border-radius:2px;
+	width:200px;
+}
+.done{
+	color:green;
+	font-size:25px;
+	width:200px;
+}
+</style>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<script>
+var width,height;
+function retrieveMap(){
+$.post('/map',function(resp){
+	resp=resp.replace(/'/g,'"')//Yay!
+	resp=JSON.parse(resp)
+$('.map').append('<img src="https://10.10.20.11/api/contextaware/v1/maps/imagesource/'+resp.image+'">')
+width=resp.dimensions.width;
+height=resp.dimensions.height;
+})
+}
+function retrievePeople(){
+
+$.post('/people',function(resp){
+resp=resp.replace('[','').replace(']','')
+resp=resp.split(",")
+$('.overlay').empty()
+for(var i = 0; i< resp.length; i++){
+	var person=resp[i].split('|')
+	person[0]=parseInt(person[0])/width*parseInt($('img').css('width'))
+	person[1]=parseInt(person[1])/height*parseInt($('img').css('height'))
+    
+	if(person[0]>=0 &&
+		person[0]<parseInt($('img').css('width'))+150 &&
+		person[1]>=0 &&
+		person[1]<parseInt($('img').css('height'))+150){
+
+	$('.overlay').append('<div class="person"></div>')
+	$('.person').last().css('margin-left',person[0]).css('margin-top',person[1]).css('width',3).css('height',3); //x and width in ft versus image width in px
+}
+
+}
+
+})
+
+}
+$(document).ready(function(){
+retrieveMap();
+setInterval(retrievePeople, 2000);
+$('.safe').on('click',function(){
+	
+		$('.safe').empty().removeClass('safe').addClass('.done').append("Report sent. You may leave the page.")
+	
+
+})
+
+})
+</script>
+</head>
+<body>
+<div class="overlay"></div>
+<div class="map"></div>
+<div class="safe">WE'RE DONE</div>
+</body>
+</html>
